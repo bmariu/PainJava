@@ -15,6 +15,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 import java.util.Scanner;
 
+import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JColorChooser;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -41,9 +42,10 @@ public class Notatnik extends JFrame implements ActionListener
 	private JMenu mPlik, mEdycja, mFormat,mStyl, mPomoc;
 	private JMenuItem iNowy,iOtwórz, iZapisz, iZakoncz, iFormat,iKolor, iCofnij, iPomoc, iZaznaczWszystko, iUsuñ, iWytnij, iUstawienieStrony;
 	private JMenuItem iWklej, iMetal, iNibus, iWindows;
+	private JCheckBoxMenuItem ichZawijaTeks;
 	private JTextArea taPoleTekstowe;
 	private JScrollPane skrolPanel;
-	private boolean StanZapisu= false;
+	private boolean StanZapisu= false, StanZawijaniaTekstu=false;
 	private Insets margines;
 	
 	UndoManager zapamietajOperacje = new UndoManager();
@@ -121,16 +123,18 @@ public class Notatnik extends JFrame implements ActionListener
 			iWklej.setAccelerator(KeyStroke.getKeyStroke("ctrl V"));
 			
 // item dotyczy menu Format
-			iFormat = new JMenuItem("Format");
+			//iFormat = new JMenuItem("Zawijaj tekst");
+			ichZawijaTeks = new JCheckBoxMenuItem("Zawijaj tekst");
 			iKolor = new JMenuItem("Kolor");
 			
-			mFormat.add(iFormat);
+		//	mFormat.add(iFormat);
+			mFormat.add(ichZawijaTeks);
 			mFormat.add(iKolor);
-			
+			ichZawijaTeks.addActionListener(this);
 			iKolor.addActionListener(this);
 			
 // item dotyczy pomocy
-			iPomoc = new JMenuItem("Pomoc");
+			iPomoc = new JMenuItem("Kontakt");
 			
 			mPomoc.add(iPomoc);
 			
@@ -154,7 +158,7 @@ public class Notatnik extends JFrame implements ActionListener
 			iNibus.addActionListener(this);
 			iWindows.addActionListener(this);
 			
-			
+		
 			
 			
 		
@@ -195,11 +199,24 @@ public class Notatnik extends JFrame implements ActionListener
         if(zapamietajOperacje.canRedo())
 	zapamietajOperacje.redo();
 	}
-
+	public void ZawijanieTekstu()
+    {
+		if(ichZawijaTeks.isSelected())
+		{ StanZawijaniaTekstu=true;
+		 taPoleTekstowe.setLineWrap(StanZawijaniaTekstu);
+		} else 
+		{
+			StanZawijaniaTekstu= false;
+			taPoleTekstowe.setLineWrap(StanZawijaniaTekstu);
+			
+			
+		}
+	}
 	public static void main(String[] args) {
 		
 		Notatnik notatnik = new Notatnik();
 		notatnik.setVisible(true);
+	
 		notatnik.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 
@@ -230,10 +247,10 @@ public class Notatnik extends JFrame implements ActionListener
 		
 	}
 	if (zród³o == iOtwórz) 
-	{
+	{ 
 		JFileChooser fc  = new JFileChooser();
 		if (fc.showOpenDialog(null)==JFileChooser.APPROVE_OPTION)
-		{
+		{	 taPoleTekstowe.setText("");//po zatwierdzeniu otwarcia pliku czyszcze pole tekstowe z poprzenich zapisów 
 			File plik = fc.getSelectedFile();
 			setTitle(fc.getName(plik));//ustawiam tytu³ notatnika jak nazwê pliku który zosa³ otwarty
 			try {
@@ -288,7 +305,7 @@ public class Notatnik extends JFrame implements ActionListener
 		  uStawienieStrony = new UstawienieStrony(this);
 		uStawienieStrony.setLocation(getX()+100, getY()+100);   // ustawiam start okna dialogowego przesunietego o 100 wzgledem okna g³ównego
 	 	 
-		uStawienieStrony.setMarginesy(margines.left, margines.right);
+		uStawienieStrony.setMarginesy(margines.left, margines.right, margines.bottom, margines.top);
 		uStawienieStrony.setVisible(true);
 	 	 
 	 	 
@@ -298,11 +315,14 @@ public class Notatnik extends JFrame implements ActionListener
 	 		//margines.set(top, left, bottom, right);(20, uStawienieStrony.getMarginesy(), 20, 20);
 	 		margines.left = Integer.parseInt(uStawienieStrony.getMarginesyLewy());
 	 		margines.right = Integer.parseInt(uStawienieStrony.getMarginesPrawy());
+	 		margines.bottom = Integer.parseInt(uStawienieStrony.getlMarginesDolny());
+	 		margines.top = Integer.parseInt(uStawienieStrony.getlMarginesGorny());
+	 	
 	 		taPoleTekstowe.setMargin(margines);
 	 	
 	 	  }else
 	 	  {
-	 	uStawienieStrony.setMarginesy(margines.left, margines.right);
+	 	uStawienieStrony.setMarginesy(margines.left, margines.right, margines.bottom, margines.top);
 	 	  }
 	 	  
 		
@@ -329,6 +349,13 @@ public class Notatnik extends JFrame implements ActionListener
 		 taPoleTekstowe.paste();
 	 
 	 //s³uchacze menii format
+	 if (zród³o == ichZawijaTeks) 
+	   ZawijanieTekstu();
+	
+	 
+	 if(isResizable())//warunek sprawdza czy okno zosta³o z maksymalizowane lub zmniejszone i w zaleznosci o stanu zawija tekst do duzego okna lub ma³ego
+		 ZawijanieTekstu(); // metoda sprawdza stan zanaczenia ichetboxZawijaTeks i ustawia zwijanie na true lub false
+		 
 	 
 	 if(zród³o == iKolor)
 	 {
@@ -372,7 +399,7 @@ public class Notatnik extends JFrame implements ActionListener
 		
 	}
 	 if (zród³o == iPomoc)
-		JOptionPane.showMessageDialog(null, taPoleTekstowe.getSelectionStart() + "\n"+ taPoleTekstowe.getSelectionEnd());
+		JOptionPane.showMessageDialog(null, "Kontakt: bmariu84@gmail.com \n Autor: Mariusz Buczek");
 	
 	
 	 
